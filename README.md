@@ -1,6 +1,11 @@
 ## App
 HOPE
 
+
+## Structure
+front : https://github.com/kazuhitonakayama/hope
+backend : https://github.com/kazuhitonakayama/go_academy/tree/main/sam/ca-14-sam-echo-app
+
 ## Script
 ### For execute main.go on heorku
 
