@@ -36,6 +36,16 @@ func main() {
         text = text + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
     }
 
+    // second message
+    dangerslists := FetchDangers()
+
+    header_second := fmt.Sprintf("前日からの感染者数の増加率が高いトップ10です、、、 \n気をつけてね、、 \n\n")
+    text_second := header_second
+
+    for _ , item := range dangerslists {
+        text_second = text_second + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
+    }
+
     // LINE Botクライアント生成する
     // BOT にはチャネルシークレットとチャネルトークンを環境変数から読み込み引数に渡す
     bot, err := linebot.New(
@@ -54,7 +64,7 @@ func main() {
         log.Fatal(err)
     }
     // テキストメッセージを生成する
-    second_message := linebot.NewTextMessage("2通目")
+    second_message := linebot.NewTextMessage(text_second)
     // テキストメッセージを友達登録しているユーザー全員に配信するa
     if _, err := bot.BroadcastMessage(second_message).Do(); err != nil {
         log.Fatal(err)
@@ -62,7 +72,26 @@ func main() {
 }
 
 func FetchLatestInfectors() []ItemList{
-    api_url := "https://s0oe7xjx7i.execute-api.ap-northeast-1.amazonaws.com/Prod/infectors"
+    api_url := "https://jbft55gtp3.execute-api.ap-northeast-1.amazonaws.com/Prod/infectors"
+
+    resp, err := http.Get(api_url)
+    // エラーに値があればログに出力し終了する
+    if err != nil {
+        log.Fatal(err)
+    }
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	var itemlist []ItemList
+	if err := json.Unmarshal(body, &itemlist); err != nil {
+        log.Fatal(err)
+    }
+
+    return itemlist
+}
+
+func FetchDangers() []ItemList{
+    api_url := "https://jbft55gtp3.execute-api.ap-northeast-1.amazonaws.com/Prod/dangers"
 
     resp, err := http.Get(api_url)
     // エラーに値があればログに出力し終了する
