@@ -39,7 +39,7 @@ func main() {
     // second message
     dangerslists := FetchDangers()
 
-    header_second := fmt.Sprintf("前日からの感染者数の増加率が高いトップ10です、、、 \n気をつけてね、、 \n\n")
+    header_second := fmt.Sprintf("前日からの感染者数の増加数が高いトップ10です、、、 \n気をつけてね、、 \n\n")
     text_second := header_second
 
     for _ , item := range dangerslists {
