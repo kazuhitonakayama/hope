@@ -27,9 +27,11 @@ type ItemList struct {
 
 func main() {
     itemlists := FetchLatestInfectors()
-    
-    header := "最新の感染者数速報です🎉 \n感染者数が多い順で並べてます👍 \n\n"
+
+    date := itemlists[0].Date
+    header := fmt.Sprintf("最新（%s時点）の感染者数速報です🎉 \n感染者数が多い順で並べてます👍 \n\n", date)
     text := header
+
     for _ , item := range itemlists {
         text = text + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
     }
