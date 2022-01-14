@@ -49,8 +49,14 @@ func main() {
 
     // テキストメッセージを生成する
     message := linebot.NewTextMessage(text)
-    // テキストメッセージを友達登録しているユーザー全員に配信する
+    // テキストメッセージを友達登録しているユーザー全員に配信するa
     if _, err := bot.BroadcastMessage(message).Do(); err != nil {
+        log.Fatal(err)
+    }
+    // テキストメッセージを生成する
+    second_message := linebot.NewTextMessage("2通目")
+    // テキストメッセージを友達登録しているユーザー全員に配信するa
+    if _, err := bot.BroadcastMessage(second_message).Do(); err != nil {
         log.Fatal(err)
     }
 }
