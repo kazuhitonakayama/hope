@@ -26,26 +26,6 @@ type ItemList struct {
 }
 
 func main() {
-    itemlists := FetchLatestInfectors()
-
-    date := itemlists[0].Date
-    header := fmt.Sprintf("最新（%s時点）の感染者数速報です🎉 \n感染者数が多い順で並べてます👍 \n\n", date)
-    text := header
-
-    for _ , item := range itemlists {
-        text = text + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
-    }
-
-    // second message
-    dangerslists := FetchDangers()
-
-    header_second := fmt.Sprintf("前日からの感染者数の増加数が高いトップ10です、、、 \n気をつけてね、、 \n\n")
-    text_second := header_second
-
-    for _ , item := range dangerslists {
-        text_second = text_second + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
-    }
-
     // LINE Botクライアント生成する
     // BOT にはチャネルシークレットとチャネルトークンを環境変数から読み込み引数に渡す
     bot, err := linebot.New(
@@ -57,18 +37,80 @@ func main() {
         log.Fatal(err)
     }
 
+    first_text := ExecuteFirstMessage()
+    second_text := ExecuteSecondMessage()
+
     // テキストメッセージを生成する
-    message := linebot.NewTextMessage(text)
+    message := linebot.NewTextMessage(first_text)
     // テキストメッセージを友達登録しているユーザー全員に配信するa
     if _, err := bot.BroadcastMessage(message).Do(); err != nil {
         log.Fatal(err)
     }
     // テキストメッセージを生成する
-    second_message := linebot.NewTextMessage(text_second)
+    second_message := linebot.NewTextMessage(second_text)
     // テキストメッセージを友達登録しているユーザー全員に配信するa
     if _, err := bot.BroadcastMessage(second_message).Do(); err != nil {
         log.Fatal(err)
     }
+
+    // Setup HTTP Server for receiving requests from LINE platform
+	http.HandleFunc("/callback", func(w http.ResponseWriter, req *http.Request) {
+		events, err := bot.ParseRequest(req)
+		if err != nil {
+			if err == linebot.ErrInvalidSignature {
+				w.WriteHeader(400)
+			} else {
+				w.WriteHeader(500)
+			}
+			return
+		}
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+						log.Print(err)
+					}
+				case *linebot.StickerMessage:
+					replyMessage := fmt.Sprintf(
+						"sticker id is %s, stickerResourceType is %s", message.StickerID, message.StickerResourceType)
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(replyMessage)).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			}
+		}
+	})
+	// This is just sample code.
+	// For actual use, you must support HTTPS by using `ListenAndServeTLS`, a reverse proxy or something else.
+	if err := http.ListenAndServe(":"+os.Getenv("PORT"), nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func ExecuteFirstMessage() string{
+    itemlists := FetchLatestInfectors()
+
+    date := itemlists[0].Date
+    header := fmt.Sprintf("最新（%s時点）の感染者数速報です🎉 \n感染者数が多い順で並べてます👍 \n\n", date)
+    text := header
+
+    for _ , item := range itemlists {
+        text = text + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
+    }
+    return text
+}
+
+func ExecuteSecondMessage() string{
+    dangerslists := FetchDangers()
+
+    header_second := fmt.Sprintf("前日からの感染者数の増加数が高いトップ10です、、、 \n気をつけてね、、 \n\n")
+    text_second := header_second
+
+    for _ , item := range dangerslists {
+        text_second = text_second + fmt.Sprintf("%s：%d（前日比 + %d 人）\n", item.NameJp, item.Npatients, item.Diff)
+    }
+    return text_second
 }
 
 func FetchLatestInfectors() []ItemList{
